@@ -30,6 +30,8 @@ class BiFPNModule(nn.Module):
 
     
     def forward(self, inputs):
+        # print(inputs)
+        # print(len(inputs))
         intermediate_out = []
         intermediate_out.append(inputs[0])
         weights = self.relu(self.weights)
@@ -39,7 +41,6 @@ class BiFPNModule(nn.Module):
         for i in range(self.num_layer):
             if self.intermediate_convs[i] == None:
                 continue
-            # print(i, inputs[i].shape,F.interpolate(inputs[i-1], scale_factor=2).shape)
             conv_input = (weights[i, 0] * inputs[i] + weights[i, 1] * 
                           F.interpolate(inputs[i-1], scale_factor=2)) /(weights[i, 0] + weights[i, 1] + self.eps)
             conv_out = self.bn(self.intermediate_convs[i](conv_input))
@@ -62,7 +63,8 @@ class BiFPNModule(nn.Module):
             else:
                 conv_input = (weights[i, 2] * inputs[i] + weights[i, 3] * intermediate_out[i] + 
                             weights[i, 4] * F.max_pool2d(intermediate_out[i + 1], kernel_size=2, stride=2))/(weights[i, 2] + weights[i, 3] + weights[i, 4] + self.eps)
-
+                conv_out = self.bn(self.output_convs[i](conv_input))
+                outputs[i] = self.relu(conv_out)
         return outputs
 
 class BiFPN(nn.Module):
