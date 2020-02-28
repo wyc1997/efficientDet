@@ -7,6 +7,7 @@ import math
 
 class BiFPNModule(nn.Module):
     def __init__(self, max_input_size, output_channel, num_layer=5, eps=0.0001):
+        super().__init__()
         if max_input_size <= 2 ** (num_layer-1) or not math.log2(max_input_size).is_integer():
             raise ValueError("invalid input size to BiFPNModule!")
         self.weights = nn.Parameter(torch.rand((num_layer, 5)), requires_grad = True)
@@ -38,6 +39,7 @@ class BiFPNModule(nn.Module):
         for i in range(self.num_layer):
             if self.intermediate_convs[i] == None:
                 continue
+            # print(i, inputs[i].shape,F.interpolate(inputs[i-1], scale_factor=2).shape)
             conv_input = (weights[i, 0] * inputs[i] + weights[i, 1] * 
                           F.interpolate(inputs[i-1], scale_factor=2)) /(weights[i, 0] + weights[i, 1] + self.eps)
             conv_out = self.bn(self.intermediate_convs[i](conv_input))
@@ -65,16 +67,17 @@ class BiFPNModule(nn.Module):
 
 class BiFPN(nn.Module):
     def __init__(self, num_modules, input_sizes, in_channels, out_channel, num_layer=5):
+        super().__init__()
         self.num_modules = num_modules
         self.num_layer = num_layer
         self.out_channel = out_channel
         self.in_channels = in_channels
         self.bifpn_modules = nn.Sequential()
-        for i in num_modules:
+        for i in range(num_modules):
             self.bifpn_modules.add_module(f"bifpn{i}", BiFPNModule(
                 max_input_size = max(input_sizes),
-                output_channel = self.output_channel,
-                num_layer=self.num_layers
+                output_channel = self.out_channel,
+                num_layer=self.num_layer
             ))
         self.convs = nn.ModuleList()
         if len(self.in_channels) != self.num_layer:

@@ -59,4 +59,5 @@ class VGG16(nn.Module):
             x = self.convs[i](x)
             if i == 1 or i == 3 or i == 7 or i == 11 or i == 15:
                 output.append(x)
+        output.reverse()
         return output
